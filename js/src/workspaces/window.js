@@ -35,6 +35,12 @@
           'bottomPanel' : {'ThumbnailsView' : true}
         }
       },
+      hudAvailable: {
+        'ThumbnailsView' : false,
+        'ImageView' : true,
+        'BookView' : true,
+        'ScrollView' : false
+      },
       windowOptions: null,
       sidePanel: null, //the actual module for the side panel
       annotationsAvailable: {
@@ -485,7 +491,7 @@
         this.currentImageMode = imageMode;
       }
       this.updateManifestInfo();
-      this.updatePanelsAndOverlay(this.viewType);
+      this.updatePanelsAndOverlay();
       this.updateSidePanel();
       _this.eventEmitter.publish("focusUpdated"); //would like to rename!
       _this.eventEmitter.publish("windowUpdated", {
@@ -498,10 +504,10 @@
       });
     },
 
-    updatePanelsAndOverlay: function(state) {
+    updatePanelsAndOverlay: function() {
       var _this = this;
 
-      jQuery.each(this.panelsAvailableForMode[state], function(panelType, viewOptions) {
+      jQuery.each(this.panelsAvailableForMode[this.viewType], function(panelType, viewOptions) {
         jQuery.each(viewOptions, function(view, displayed) {
           //instantiate any panels that exist for this view but are still null
           if (view !== '' && _this[panelType] === null) {
@@ -519,20 +525,22 @@
           }
 
           //refresh displayed in case TableOfContents module changed it
-          displayed = _this.panelsAvailableForMode[state][panelType][view];
+          displayed = _this.panelsAvailableForMode[_this.viewType][panelType][view];
 
           //toggle any valid panels
           if (view !== '' && displayed) {
-            _this.togglePanels(panelType, displayed, view, state);
+            _this.togglePanels(panelType, displayed, view, _this.viewType);
           }
 
           //hide any panels instantiated but not available to this view
           if (view === '' && _this[panelType]) {
-            _this.togglePanels(panelType, displayed, view, state);
+            _this.togglePanels(panelType, displayed, view, _this.viewType);
           }
 
         });
       });
+      //show/hide HUD as needed
+      this.eventEmitter.publish('HUD_TOGGLE_DISPLAY.'+this.id, this.hudAvailable[this.viewType]);
 
       //update panels with current image
       //console.log(this.focusImages);
@@ -665,18 +673,22 @@
                                                               });
 
       this.element.find('.single-image-option').on('click', function() {
+        _this.toggleMode('ImageView', 'ImageView');
         _this.eventEmitter.publish('CHANGE_MODE_AND_CANVAS.' + _this.id, ['ImageView', _this.canvasID]);
       });
 
       this.element.find('.book-option').on('click', function() {
+        _this.toggleMode('BookView', 'BookView');
         _this.eventEmitter.publish('CHANGE_MODE_AND_CANVAS.' + _this.id, ['BookView', _this.canvasID]);
       });
 
       this.element.find('.scroll-option').on('click', function() {
+        _this.toggleMode('ScrollView', '');
         _this.eventEmitter.publish('CHANGE_MODE_AND_CANVAS.' + _this.id, ['ScrollView', _this.canvasID]);
       });
 
       this.element.find('.thumbnails-option').on('click', function() {
+        _this.toggleMode('ThumbnailsView', '');
         _this.eventEmitter.publish('CHANGE_MODE_AND_CANVAS.' + _this.id, ['ThumbnailsView', _this.canvasID]);
       });
 

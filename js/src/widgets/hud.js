@@ -40,7 +40,19 @@
         });
       }
 
+      this.listenForActions();
       this.bindEvents();
+    },
+
+    listenForActions: function() {
+      var _this = this;
+      this.eventEmitter.subscribe('HUD_TOGGLE_DISPLAY.'+this.windowId, function(event, show) {
+        if (show) {
+          _this.element.show();
+        } else {
+          _this.element.hide();
+        }
+      });
     },
 
     bindEvents: function() {
