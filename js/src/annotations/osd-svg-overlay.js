@@ -54,6 +54,7 @@
     this.fillColor = drawingToolsSettings.fillColor;
     this.fillColorAlpha = drawingToolsSettings.fillColorAlpha;
     this.viewer = viewer;
+    console.log(this.viewer);
     this.canvas = document.createElement('canvas');
     // workaround to remove focus from editor
     jQuery(this.canvas).attr('tabindex', '0').mousedown(function(){ jQuery(this).focus();});
