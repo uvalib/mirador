@@ -126,7 +126,10 @@
       });
 
       _this.eventEmitter.subscribe('fitBounds.' + _this.windowId, function(event, bounds) {
-        var rect = _this.osd.viewport.imageToViewportRectangle(Number(bounds.x), Number(bounds.y), Number(bounds.width), Number(bounds.height));
+        var canvas =_this.viewer.getState().canvasObjects[_this.canvasID],
+        coords = canvas.canvasToWorldCoordinates(bounds),
+        rect = new OpenSeadragon.Rect(coords.x, coords.y, coords.width, coords.height);
+        console.log(rect);
         _this.osd.viewport.fitBoundsWithConstraints(rect, false);
       });
 
@@ -525,7 +528,6 @@
         selectedCanvas: this.canvasID
       });
 
-      _this.viewer.selectViewingMode(this.viewingMode);
       _this.osd = _this.viewer.osd;
 //        if (_this.state.getStateProperty('autoHideControls')) {
 //          var timeoutID = null,
@@ -565,7 +567,10 @@
       //     _this.eventEmitter.publish('updateTooltips.' + _this.windowId, [point, point]);
       //   }, 30));
 
-      //   _this.osd.addHandler('open', function(){
+      setTimeout(function() {
+        _this.addAnnotationsLayer(_this.elemAnno);
+      }, 1000);
+
       //     _this.eventEmitter.publish('osdOpen.'+_this.windowId);
       //     if (_this.osdOptions.osdBounds) {
       //       var rect = new OpenSeadragon.Rect(_this.osdOptions.osdBounds.x, _this.osdOptions.osdBounds.y, _this.osdOptions.osdBounds.width, _this.osdOptions.osdBounds.height);
@@ -574,8 +579,6 @@
       //       //else reset bounds for this image
       //       _this.setBounds();
       //     }
-
-          _this.addAnnotationsLayer(_this.elemAnno);
 
           // //get the state before resetting it so we can get back to that state
           // var originalState = _this.hud.annoState.current;
@@ -622,6 +625,8 @@
         state: _this.state,
         annotationsList: _this.state.getWindowAnnotationsList(_this.windowId) || [],
         viewer: _this.osd,
+        manifestor: _this.viewer,
+        canvasId: _this.canvasID,
         windowId: _this.windowId,
         element: element,
         eventEmitter: _this.eventEmitter

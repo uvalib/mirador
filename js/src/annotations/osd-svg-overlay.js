@@ -8,11 +8,11 @@
     return this.svgOverlayTools;
   };
 
-  OpenSeadragon.Viewer.prototype.svgOverlay = function(osdViewerId, windowId, state, eventEmitter) {
-    return new $.Overlay(this, osdViewerId, windowId, state, eventEmitter);
+  OpenSeadragon.Viewer.prototype.svgOverlay = function(osdViewerId, windowId, state, eventEmitter, manifestor) {
+    return new $.Overlay(this, osdViewerId, windowId, state, eventEmitter, manifestor);
   };
 
-  $.Overlay = function(viewer, osdViewerId, windowId, state, eventEmitter) {
+  $.Overlay = function(viewer, osdViewerId, windowId, state, eventEmitter, manifestor) {
     var drawingToolsSettings = state.getStateProperty('drawingToolsSettings');
     this.drawingToolsSettings = drawingToolsSettings;
     var availableAnnotationDrawingTools = state.getStateProperty('availableAnnotationDrawingTools');
@@ -22,6 +22,7 @@
       inEditMode: false,
       osdViewerId: osdViewerId,
       windowId: windowId,
+      manifestor: manifestor,
       commentPanel: null,
       mode: '', // Possible modes: 'create', 'translate', 'deform','rotate', 'edit' and '' as default.
       draftPaths: [],
@@ -57,10 +58,11 @@
     console.log(this.viewer);
     this.canvas = document.createElement('canvas');
     // workaround to remove focus from editor
-    jQuery(this.canvas).attr('tabindex', '0').mousedown(function(){ jQuery(this).focus();});
+    jQuery(this.canvas).attr({'tabindex': '0'}).mousedown(function(){ jQuery(this).focus();});
     this.canvas.id = 'draw_canvas_' + this.windowId;
     // Drawing of overlay border during development.
     // this.canvas.style.border = '1px solid yellow';
+    console.log(this.viewer.canvas);
     this.viewer.canvas.appendChild(this.canvas);
 
     var _this = this;
@@ -329,6 +331,7 @@
       this.paperScope = new paper.PaperScope();
       this.paperScope.setup('draw_canvas_' + _this.windowId);
       this.paperScope.activate();
+      this.paperScope.view.zoom = this.getViewerScale();
       this.paperScope.project.options.handleSize = _this.state.getStateProperty('shapeHandleSize');
       jQuery(_this.canvas).attr('keepalive', 'true');
       this.annotationUtils = new $.AnnotationUtils();
@@ -365,6 +368,13 @@
       jQuery.data(document.body, 'draw_canvas_' + _this.windowId, mouseTool);
 
       this.listenForActions();
+    },
+
+    getViewerScale: function() {
+      var zoom = this.viewer.viewport.getZoom(true);
+      var width = this.viewer.container.clientWidth;
+
+      return width * zoom;
     },
 
     handleDeleteShapeEvent: function (event, shape) {
@@ -620,20 +630,27 @@
     resize: function() {
       var viewportBounds = this.viewer.viewport.getBounds(true);
       /* in viewport coordinates */
-      this.canvas.width = this.viewer.viewport.containerSize.x;
-      this.canvas.height = this.viewer.viewport.containerSize.y;
+      var width = this.viewer.container.clientWidth * 2;
+      var height = this.viewer.container.clientHeight * 2;
+      this.canvas.width = width;
+      this.canvas.height = height;
       var transform = 'translate(0px,0px)';
       this.canvas.style.WebkitTransform = transform;
       this.canvas.style.msTransform = transform;
       this.canvas.style.transform = transform;
       this.canvas.style.marginLeft = '0px';
       this.canvas.style.marginTop = '0px';
+      this.canvas.style.width = width;
+      this.canvas.style.height = height;
       if (this.paperScope && this.paperScope.view) {
         this.paperScope.view.viewSize = new this.paperScope.Size(this.canvas.width, this.canvas.height);
-        this.paperScope.view.zoom = this.viewer.viewport.viewportToImageZoom(this.viewer.viewport.getZoom(true));
-        this.paperScope.view.center = new this.paperScope.Size(
-          this.viewer.viewport.contentSize.x * viewportBounds.x + this.paperScope.view.bounds.width / 2,
-          this.viewer.viewport.contentSize.x * viewportBounds.y + this.paperScope.view.bounds.height / 2);
+        this.paperScope.view.zoom = this.getViewerScale();
+        // this.paperScope.view.center = new this.paperScope.Size(
+        //   // this.viewer.viewport.contentSize.x * viewportBounds.x + this.paperScope.view.bounds.width / 2,
+        //   // this.viewer.viewport.contentSize.x * viewportBounds.y + this.paperScope.view.bounds.height / 2);
+        //   this.viewer.viewport.containerSize.x * viewportBounds.x + this.paperScope.view.bounds.width / 2,
+        //   this.viewer.viewport.containerSize.x * viewportBounds.y + this.paperScope.view.bounds.height / 2);
+        this.paperScope.view.center = new this.paperScope.Point(this.viewer.viewport.getCenter());
         this.paperScope.view.update(true);
         var allItems = this.paperScope.project.getItems({
           name: /_/

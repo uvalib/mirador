@@ -18,7 +18,7 @@
   $.OsdRegionDrawTool.prototype = {
 
     init: function() {
-      this.svgOverlay = this.osdViewer.svgOverlay(this.osdViewer.id, this.windowId, this.state, this.eventEmitter);
+      this.svgOverlay = this.osdViewer.svgOverlay(this.osdViewer.id, this.windowId, this.state, this.eventEmitter, this.manifestor);
       this.svgOverlay.show();
       this.svgOverlay.disable();
     },
@@ -96,6 +96,7 @@
         viewport: windowElement,
         getAnnoFromRegion: _this.getAnnoFromRegion.bind(this)
       });
+      console.log(this.svgOverlay.paperScope.view.zoom);
       this.svgOverlay.paperScope.view.draw();
     },
 
@@ -107,8 +108,10 @@
         'width': parseInt(shapeArray[2]),
         'height': parseInt(shapeArray[3])
       };
-
-      return this.svgOverlay.createRectangle(shape, annotation);
+      var canvas = this.manifestor.getState().canvasObjects[this.canvasId],
+      coords = canvas.canvasToWorldCoordinates(shape),
+      rect = new OpenSeadragon.Rect(coords.x, coords.y, coords.width, coords.height);
+      return this.svgOverlay.createRectangle(rect, annotation);
     },
 
     showTooltipsFromMousePosition: function(event, location, absoluteLocation) {

@@ -5,6 +5,7 @@
     jQuery.extend(true, this, {
       annotationsList:   null,
       viewer:            null,
+      manifestor:        null,
       drawTool:          null,
       selected:          null,
       hovered:           null,
@@ -85,6 +86,8 @@
       var _this = this;
       this.drawTool = new $.OsdRegionDrawTool({
         osdViewer: _this.viewer,
+        manifestor: _this.manifestor,
+        canvasId: _this.canvasId,
         parent: _this,
         list: _this.annotationsList, // must be passed by reference.
         visible: false,
