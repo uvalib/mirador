@@ -510,7 +510,7 @@
 
       _this.viewer = manifestor({
         manifest: this.manifest.jsonLd,
-        container: osdElement,
+        container: osdElement[0],
         perspective:  this.perspective,
         viewingMode: this.viewingMode,
         canvasClass: 'canvas', //default set to 'canvas'
