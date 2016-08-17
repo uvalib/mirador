@@ -317,8 +317,6 @@
       }
     }));
 
-
-
     this.resize();
     this.show();
     this.init();
@@ -773,10 +771,9 @@
     createRectangle: function(shape, annotation) {
       var paperItems = [];
       var rect = new $.Rectangle();
-      var newShape = this.viewer.viewport.viewportToImageRectangle(shape);
       var initialPoint = {
-        'x': newShape.x,
-        'y': newShape.y
+        'x': shape.x,
+        'y': shape.y
       };
       var currentMode = this.mode;
       var currentPath = this.path;
@@ -790,8 +787,8 @@
       this.path = rect.createShape(initialPoint, this);
       var eventData = {
         'delta': {
-          'x': newShape.width,
-          'y': newShape.height
+          'x': shape.width,
+          'y': shape.height
         }
       };
       rect.onMouseDrag(eventData, this);
