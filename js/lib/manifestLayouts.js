@@ -22443,6 +22443,17 @@ CanvasObject.prototype = {
     };
   },
 
+  canvasToWorldCoordinates: function(canvasRegion) {
+    var self = this;
+
+    return {
+      x: self.bounds.x + (canvasRegion.x * canvasRegion.x/self.bounds.width),
+      y: self.bounds.y + (canvasRegion.y * canvasRegion.y/self.bounds.width),
+      width: self.bounds.width * self.bounds.width/canvasRegion.width,
+      height: self.bounds.height * self.bounds.height/canvasRegion.height
+    };
+  },
+
   getAspectRatio: function() {
     return this.bounds.width / this.bounds.height;
   },
@@ -22589,7 +22600,7 @@ var d3Renderer = function(config) {
   dispatcher.on('viewingModeUpdated', changeViewingMode);
   // dispatcher.on('changeViewingDirection', changeViewingMode);
   dispatcher.on('scaleFactorUpdated', immediateUpdate);
-  dispatcher.on('image-status-updated', updateThumbs);
+  dispatcher.on('image-status-updated', updateThumb);
 
   function buildContainers() {
     scrollContainer = d3.select(container).selectAll('.manifest-scroll-container')
@@ -22853,20 +22864,28 @@ var d3Renderer = function(config) {
       .text(function(d) { return d.canvas.label; });
   }
 
-  function updateThumbs(imageResource) {
-    container
-      .selectAll('.' + frameClass)
-      .filter(function(d) {
-        return d.canvas.id === imageResource.parent.id;
-      })
-      .selectAll('.' + canvasClass)
-      .selectAll('img')
-      .data([imageResource.parent.thumbnailResource])
-      .enter()
-      .append('img')
-      .attr('src', function(d) {
-        return imageResource.tileSource.levels[0].url;
-      });
+  function updateThumb(imageResource) {
+    // check if the resource is a thumbnail
+    // if it has been requested, add loading class
+    // if drawn, add image and give it a class
+    // to allow fading in.
+    // if failed, give it a failing class
+    // if locked, add a lock class
+    if (imageResource.status === 'drawn') {
+      container
+        .selectAll('.' + frameClass)
+        .filter(function(d) {
+          return d.canvas.id === imageResource.parent.id;
+        })
+        .selectAll('.' + canvasClass)
+        .selectAll('img')
+        .data([imageResource.parent.thumbnailResource])
+        .enter()
+        .append('img')
+        .attr('src', function(d) {
+          return imageResource.tileSource.levels[0].url;
+        });
+    }
   }
 
   function getWidthInPx(d) {
@@ -25474,7 +25493,6 @@ var manifestor = function(options) {
   //   }
   // }
 
-  // scrollContainer.on('scroll', scrollHandler);
 
   // Do we really want to expose this?
   function setState(state) {
@@ -25646,6 +25664,7 @@ var manifestor = function(options) {
     next: next,
     previous: previous,
     resize: resize,
+    // canvases: viewerState.canvases.bind(viewerState),
     selectCanvas: selectCanvas,
     selectPerspective: selectPerspective,
     selectViewingMode: selectViewingMode,
@@ -25693,6 +25712,7 @@ var OsdRenderer = function(options) {
   });
   this.dispatcher.on('image-needed', function(imageResource) {
     self.openTileSource(imageResource);
+    console.log(imageResource.tileSource);
   });
   this.dispatcher.on('image-show', function(imageResource) {
     // Check whether or not this item has been drawn.
@@ -25700,6 +25720,7 @@ var OsdRenderer = function(options) {
     // and the opacity can be updated.
     if (imageResource.getStatus() === 'drawn') {
       self.updateImageOpacity(imageResource);
+      console.log(imageResource.tileSource);
     }
   });
   this.dispatcher.on('image-hide', function(imageResource) {
@@ -26130,11 +26151,11 @@ var CanvasObject = require('./canvasObject');
 
 var viewerState = function(config) {
   var dispatcher = config.dispatcher,
-      canvases = config.sequence ? config.sequence.canvases : config.manifest.sequences[0].canvases,
+      configCanvases = config.sequence ? config.sequence.canvases : config.manifest.sequences[0].canvases,
       state = {
-        canvases : canvases,
-        canvasObjects : buildCanvasObjects(canvases),
-        selectedCanvas : config.selectedCanvas || canvases[0]['@id'], // @id of the canvas:
+        canvases : configCanvases,
+        canvasObjects : buildCanvasObjects(configCanvases),
+        selectedCanvas : config.selectedCanvas || configCanvases[0]['@id'], // @id of the canvas:
         perspective : config.perspective ? config.perspective : 'overview',
         viewingMode : config.viewingMode ? config.viewingHint : getViewingHint(config.sequence, config.manifest), // manifest derived or user specified (iiif viewingHint)
         viewingDirection : config.viewingDirection ? config.viewingDirection : getViewingDirection(config.sequence, config.manifest), // manifest derived or user specified (iiif viewingHint)
@@ -26222,6 +26243,19 @@ var viewerState = function(config) {
     }
   }
 
+  function canvases(canvases) {
+    if (!arguments.length) {
+      return state.canvases;
+    } else  {
+      state.canvases = state.canvases;
+      state.selectedCanvas = canvases.some(function(canvas){
+        return
+      }) ? state.selectedCanvas : canvases[0]['@id'];
+      dispatcher.emit('canvasesUpdated');
+      return state.canvases;
+    }
+  }
+
   function selectedPerspective(perspective) {
     if (!arguments.length) {
       return state.perspective;
@@ -26298,7 +26332,8 @@ var viewerState = function(config) {
     getState: getState,
     setState: setState,
     selectedCanvasObject: selectedCanvasObject,
-    selectedPerspective: selectedPerspective
+    selectedPerspective: selectedPerspective,
+    canvases: canvases
   };
 };
 
