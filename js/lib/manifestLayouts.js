@@ -22444,13 +22444,14 @@ CanvasObject.prototype = {
   },
 
   canvasToWorldCoordinates: function(canvasRegion) {
-    var self = this;
+    var self = this,
+        scaleFactor = self.bounds.width/self.canvas.width;
 
     return {
-      x: self.bounds.x + (canvasRegion.x * canvasRegion.x/self.bounds.width),
-      y: self.bounds.y + (canvasRegion.y * canvasRegion.y/self.bounds.width),
-      width: self.bounds.width * self.bounds.width/canvasRegion.width,
-      height: self.bounds.height * self.bounds.height/canvasRegion.height
+      x: self.bounds.x + (canvasRegion.x * scaleFactor),
+      y: self.bounds.y + (canvasRegion.y * scaleFactor),
+      width: canvasRegion.width * scaleFactor,
+      height: canvasRegion.height * scaleFactor
     };
   },
 
@@ -22692,6 +22693,7 @@ var d3Renderer = function(config) {
       return frame.canvas.selected;
     })[0].vantage;
 
+    renderLayout(layout, false);
     renderState.constraintBounds(viewBounds, false);
     if (viewerState.getState().perspective === 'detail') {
       disableScrollEvents();
@@ -22702,7 +22704,6 @@ var d3Renderer = function(config) {
         .style('opacity', 1);
       enableOverviewScrollEvents();
     }
-    renderLayout(layout, false);
   }
   function changePerspective() {
     if (viewerState.getState().perspective === 'detail') {
