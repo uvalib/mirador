@@ -629,6 +629,10 @@
 
     resize: function() {
       var viewportBounds = this.viewer.viewport.getBounds(true);
+      console.log("viewportBounds");
+      console.log(viewportBounds);
+      var canvas = this.manifestor.getState().canvasObjects[this.state.getWindowObjectById(this.windowId).canvasID];
+      console.log(canvas);
       /* in viewport coordinates */
       console.log(this.viewer.viewport.getContainerSize());
       var width = this.viewer.container.clientWidth;
@@ -647,9 +651,9 @@
       if (this.paperScope && this.paperScope.view) {
         this.paperScope.view.viewSize = new this.paperScope.Size(this.canvas.width, this.canvas.height);
         this.paperScope.view.zoom = this.getViewerScale();
-        // this.paperScope.view.center = new this.paperScope.Size(
-        //   // this.viewer.viewport.contentSize.x * viewportBounds.x + this.paperScope.view.bounds.width / 2,
-        //   // this.viewer.viewport.contentSize.x * viewportBounds.y + this.paperScope.view.bounds.height / 2);
+        this.paperScope.view.center = new this.paperScope.Size(
+          canvas.canvas.width * viewportBounds.x + this.paperScope.view.bounds.width / 2,
+          canvas.canvas.width * viewportBounds.y + this.paperScope.view.bounds.height / 2);
         //   this.viewer.viewport.containerSize.x * viewportBounds.x + this.paperScope.view.bounds.width / 2,
         //   this.viewer.viewport.containerSize.x * viewportBounds.y + this.paperScope.view.bounds.height / 2);
         this.paperScope.view.center = new this.paperScope.Point(this.viewer.viewport.getCenter());
