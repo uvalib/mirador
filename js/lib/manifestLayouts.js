@@ -22105,6 +22105,7 @@ module.exports = ImageResource;
 
 },{}],5:[function(require,module,exports){
 var ImageResource = require('./ImageResource');
+var ThumbnailFactory = require('./ThumbnailFactory');
 
 var _getRectFromStringArray = function(arr) {
   var rectArray = arr.map(function(number) {
@@ -22164,7 +22165,7 @@ var _buildImageConfig = function(resource) {
     }
   };
 
-  var imageTileSource =  _getImageTilesource();
+  var imageTileSource = _getImageTilesource();
 
   return {
     // the ID is to use in the DOM, so remove special characters. The URL may not be unique, so add a salt.
@@ -22172,7 +22173,8 @@ var _buildImageConfig = function(resource) {
     label: resource.label,
     tileSource: imageTileSource,
     clipRegion: _getSegmentFromUrl(id),
-    dynamic: isDynamic
+    dynamic: isDynamic,
+    // thumbnailUrl: ThumbnailFactory({images:[resource]}).tileSource.levels[0].url
   };
 };
 
@@ -22251,7 +22253,7 @@ var ImageResourceFactory = function(image, parent) {
 
 module.exports = ImageResourceFactory;
 
-},{"./ImageResource":4}],6:[function(require,module,exports){
+},{"./ImageResource":4,"./ThumbnailFactory":6}],6:[function(require,module,exports){
 'use strict';
 
 var ImageResource = require('./ImageResource');
@@ -22601,6 +22603,7 @@ var d3Renderer = function(config) {
   dispatcher.on('viewingModeUpdated', changeViewingMode);
   // dispatcher.on('changeViewingDirection', changeViewingMode);
   dispatcher.on('scaleFactorUpdated', immediateUpdate);
+  dispatcher.on('sizeUpdated', immediateUpdate);
   dispatcher.on('image-status-updated', updateThumb);
 
   function buildContainers() {
@@ -25626,10 +25629,10 @@ var manifestor = function(options) {
   }
 
   function resize() {
-    viewerState.setState({
-      width: options.container.offsetWidth,
-      height: options.container.offsetHeight
-    });
+    viewerState.size(
+      options.container.offsetWidth,
+      options.container.offsetHeight
+    );
   }
 
   function updateThumbSize(scaleFactor) {
@@ -25696,24 +25699,23 @@ var OsdRenderer = function(options) {
   this.dispatcher = options.dispatcher;
   this.renderState = options.renderState;
   this.viewerState = options.viewerState;
-  console.log(OpenSeadragon.version);
   this.viewer = OpenSeadragon({
     element: options.container,
     showNavigationControl: false,
-    preserveViewport: true,
-    autoResize: false
+    preserveViewport: true
   });
   this.addOSDHandlers(this.viewerState, this.renderState);
 
   this.dispatcher.on('canvas-position-updated', function(canvasObject) {
+    self.viewer.forceRedraw();
     canvasObject.images.forEach(function(imageResource) {
       self.updateImagePosition(imageResource);
     });
     self.updateImagePosition(canvasObject.thumbnailResource);
   });
   this.dispatcher.on('image-needed', function(imageResource) {
+    self.viewer.forceRedraw();
     self.openTileSource(imageResource);
-    console.log(imageResource.tileSource);
   });
   this.dispatcher.on('image-show', function(imageResource) {
     // Check whether or not this item has been drawn.
@@ -25721,7 +25723,6 @@ var OsdRenderer = function(options) {
     // and the opacity can be updated.
     if (imageResource.getStatus() === 'drawn') {
       self.updateImageOpacity(imageResource);
-      console.log(imageResource.tileSource);
     }
   });
   this.dispatcher.on('image-hide', function(imageResource) {
@@ -26278,6 +26279,23 @@ var viewerState = function(config) {
     }
   }
 
+  function size(height, width) {
+    if (!arguments.length) {
+      return {
+        width:state.width,
+        height: state.height
+      };
+    } else  {
+      state.width = width;
+      state.height = height;
+      dispatcher.emit('sizeUpdated');
+      return {
+        width: state.width,
+        height: state.height
+      };
+    }
+  }
+
   function navigatePaged(currentIndex, incrementValue) {
     // Simply set which ones are "needed", let osd do the rest.
     var self = this;
@@ -26334,7 +26352,8 @@ var viewerState = function(config) {
     setState: setState,
     selectedCanvasObject: selectedCanvasObject,
     selectedPerspective: selectedPerspective,
-    canvases: canvases
+    canvases: canvases,
+    size: size
   };
 };
 
