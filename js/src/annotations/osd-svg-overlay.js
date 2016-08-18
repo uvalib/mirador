@@ -630,8 +630,10 @@
     resize: function() {
       var viewportBounds = this.viewer.viewport.getBounds(true);
       /* in viewport coordinates */
-      var width = this.viewer.container.clientWidth * 2;
-      var height = this.viewer.container.clientHeight * 2;
+      console.log(this.viewer.viewport.getContainerSize());
+      var width = this.viewer.container.clientWidth;
+      var height = this.viewer.container.clientHeight;
+      console.log(width);
       this.canvas.width = width;
       this.canvas.height = height;
       var transform = 'translate(0px,0px)';
@@ -651,6 +653,7 @@
         //   this.viewer.viewport.containerSize.x * viewportBounds.x + this.paperScope.view.bounds.width / 2,
         //   this.viewer.viewport.containerSize.x * viewportBounds.y + this.paperScope.view.bounds.height / 2);
         this.paperScope.view.center = new this.paperScope.Point(this.viewer.viewport.getCenter());
+        console.log(this.paperScope.view.center);
         this.paperScope.view.update(true);
         var allItems = this.paperScope.project.getItems({
           name: /_/
