@@ -646,16 +646,21 @@
       this.canvas.style.transform = transform;
       this.canvas.style.marginLeft = '0px';
       this.canvas.style.marginTop = '0px';
-      this.canvas.style.width = width;
-      this.canvas.style.height = height;
+      // this.canvas.style.width = width;
+      // this.canvas.style.height = height;
       if (this.paperScope && this.paperScope.view) {
         this.paperScope.view.viewSize = new this.paperScope.Size(this.canvas.width, this.canvas.height);
+        //this.paperScope.view.zoom = this.viewer.viewport.viewportToImageZoom(this.viewer.viewport.getZoom(true));
         this.paperScope.view.zoom = this.getViewerScale();
+        console.log("zoom");
+        console.log(this.paperScope.view.zoom);
+        console.log("bounds");
+        console.log(this.paperScope.view.bounds);
         this.paperScope.view.center = new this.paperScope.Size(
           canvas.canvas.width * viewportBounds.x + this.paperScope.view.bounds.width / 2,
           canvas.canvas.width * viewportBounds.y + this.paperScope.view.bounds.height / 2);
-        //   this.viewer.viewport.containerSize.x * viewportBounds.x + this.paperScope.view.bounds.width / 2,
-        //   this.viewer.viewport.containerSize.x * viewportBounds.y + this.paperScope.view.bounds.height / 2);
+        //   this.viewer.viewport.contentSize.x * viewportBounds.x + this.paperScope.view.bounds.width / 2,
+        //   this.viewer.viewport.contentSize.x * viewportBounds.y + this.paperScope.view.bounds.height / 2);
         this.paperScope.view.center = new this.paperScope.Point(this.viewer.viewport.getCenter());
         console.log(this.paperScope.view.center);
         this.paperScope.view.update(true);
