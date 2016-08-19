@@ -25662,6 +25662,22 @@ var manifestor = function(options) {
     _navigate(false);
   }
 
+  function destroy() {
+    // TODO: is there more cleanup needed?
+    if (osdRenderer.osd) {
+      osdRenderer.osd.destroy();
+    }
+
+    while (options.container.firstChild) {
+      options.container.removeChild(
+        options.container.firstChild
+      );
+    }
+
+    viewerState = null;
+    renderState = null;
+  }
+
   return {
     // Actions to update the internal state.
     // setScrollPosition: setScrollPosition,
@@ -25684,7 +25700,8 @@ var manifestor = function(options) {
       return viewerState.getState();
     },
     setState: setState,
-    osd: osdRenderer.viewer
+    osd: osdRenderer.viewer,
+    destroy: destroy
   };
 };
 

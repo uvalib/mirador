@@ -521,8 +521,8 @@
         labelClass: 'label', //default set to 'label'
         viewportPadding: {  // in detail view, make sure this area is clear
           top: 0,
-          left: 10,
-          right: 10,
+          left: 0,
+          right: 0,
           bottom: 20 // units in % of pixel height of viewport
         },
         selectedCanvas: this.canvasID
@@ -647,7 +647,9 @@
         _this.eventEmitter.publish('UPDATE_FOCUS_IMAGES.' + this.windowId, {array: [canvasID]});
       }
 
-      this.viewer.selectCanvas(canvasID);
+      this.viewer.setState({
+        selectedCanvas: canvasID
+      });
       this.viewer.selectViewingMode(this.viewingMode);
       this.viewer.selectPerspective(this.perspective);
     },

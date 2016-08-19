@@ -70,11 +70,11 @@
       var _this = this,
           manifest = _this.manifest.jsonLd;
 
-      //make sure annotations list is cleared out when changing objects within window
+      // make sure annotations list is cleared out when changing objects within window
       while(_this.annotationsList.length > 0) {
         _this.annotationsList.pop();
       }
-      //unsubscribe from stale events as they will be updated with new module calls
+      // unsubscribe from stale events as they will be updated with new module calls
       _this.eventEmitter.unsubscribe(('currentCanvasIDUpdated.' + _this.id));
 
       _this.removeBookView();
@@ -411,17 +411,6 @@
         this[prop] = value;
       }
     },
-
-    /*setTOCBoolean: function(boolValue) {
-     var _this = this;
-     jQuery.each(this.panelsAvailableForMode, function(key, value) {
-     _this.panelsAvailableForMode[key].sidePanel.TableOfContents = boolValue;
-     });
-     //remove thumbnail icon if not available for this object
-     if (!boolValue) {
-     this.element.find('.mirador-icon-toc').hide();
-     }
-     },*/
 
     togglePanels: function(panelType, panelState, viewType, currentMode) {
       //update state in panelsAvailableForMode
