@@ -129,7 +129,6 @@
         var canvas =_this.viewer.getState().canvasObjects[_this.canvasID],
         coords = canvas.canvasToWorldCoordinates(bounds),
         rect = new OpenSeadragon.Rect(coords.x, coords.y, coords.width, coords.height);
-        console.log(rect);
         _this.osd.viewport.fitBoundsWithConstraints(rect, false);
       });
 

@@ -55,14 +55,12 @@
     this.fillColor = drawingToolsSettings.fillColor;
     this.fillColorAlpha = drawingToolsSettings.fillColorAlpha;
     this.viewer = viewer;
-    console.log(this.viewer);
     this.canvas = document.createElement('canvas');
     // workaround to remove focus from editor
     jQuery(this.canvas).attr({'tabindex': '0'}).mousedown(function(){ jQuery(this).focus();});
     this.canvas.id = 'draw_canvas_' + this.windowId;
     // Drawing of overlay border during development.
     // this.canvas.style.border = '1px solid yellow';
-    console.log(this.viewer.canvas);
     this.viewer.canvas.appendChild(this.canvas);
 
     var _this = this;
@@ -629,15 +627,10 @@
 
     resize: function() {
       var viewportBounds = this.viewer.viewport.getBounds(true);
-      console.log("viewportBounds");
-      console.log(viewportBounds);
       var canvas = this.manifestor.getState().canvasObjects[this.state.getWindowObjectById(this.windowId).canvasID];
-      console.log(canvas);
       /* in viewport coordinates */
-      console.log(this.viewer.viewport.getContainerSize());
       var width = this.viewer.container.clientWidth;
       var height = this.viewer.container.clientHeight;
-      console.log(width);
       this.canvas.width = width;
       this.canvas.height = height;
       var transform = 'translate(0px,0px)';
@@ -652,17 +645,12 @@
         this.paperScope.view.viewSize = new this.paperScope.Size(this.canvas.width, this.canvas.height);
         //this.paperScope.view.zoom = this.viewer.viewport.viewportToImageZoom(this.viewer.viewport.getZoom(true));
         this.paperScope.view.zoom = this.getViewerScale();
-        console.log("zoom");
-        console.log(this.paperScope.view.zoom);
-        console.log("bounds");
-        console.log(this.paperScope.view.bounds);
         this.paperScope.view.center = new this.paperScope.Size(
           canvas.canvas.width * viewportBounds.x + this.paperScope.view.bounds.width / 2,
           canvas.canvas.width * viewportBounds.y + this.paperScope.view.bounds.height / 2);
         //   this.viewer.viewport.contentSize.x * viewportBounds.x + this.paperScope.view.bounds.width / 2,
         //   this.viewer.viewport.contentSize.x * viewportBounds.y + this.paperScope.view.bounds.height / 2);
         this.paperScope.view.center = new this.paperScope.Point(this.viewer.viewport.getCenter());
-        console.log(this.paperScope.view.center);
         this.paperScope.view.update(true);
         var allItems = this.paperScope.project.getItems({
           name: /_/

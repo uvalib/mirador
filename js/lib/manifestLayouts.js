@@ -508,7 +508,10 @@ var manifestLayout = function (options) {
       frame.y = lineNumber * frame.height; // y determined by the line;
 
       frame.canvases.forEach(function (canvas, index) {
-        canvas.localX = frame.leftPadding, canvas.localY = frame.topPadding, canvas.x = frame.x + frame.leftPadding, canvas.y = frame.y + frame.topPadding;
+        canvas.localX = frame.leftPadding;
+        canvas.localY = frame.topPadding;
+        canvas.x = frame.x + frame.leftPadding;
+        canvas.y = frame.y + frame.topPadding;
       });
 
       return frame;
@@ -518,44 +521,85 @@ var manifestLayout = function (options) {
   function bindCanvases(canvases, viewingMode, viewingDirection, framePadding, facingCanvasPadding) {
 
     if (viewingMode === 'paged') {
-      return canvases.filter(function (canvas) {
+      var pages = canvases.filter(function (canvas) {
         return canvas.viewingHint === 'non-paged' ? false : true;
-      }).map(function (canvas, index) {
-        var boundPagePadding;
-
-        if (index === 0) {
-          boundPagePadding = {
-            top: framePadding.top,
-            bottom: framePadding.bottom,
-            left: framePadding.left,
-            right: canvas.width * facingCanvasPadding / 100 / 2
-          };
-          boundPagePadding.left = canvas.width + facingCanvasPadding / 100 * canvas.width;
-          return frame(canvas, boundPagePadding);
-        } else if ((index + 1) % 2 === 0) {
-          // gets all even pages and makes
-          // their facing page the next page
-          // in the index.
-          boundPagePadding = {
-            top: framePadding.top,
-            bottom: framePadding.bottom,
-            left: framePadding.left,
-            right: canvas.width * facingCanvasPadding / 100 / 2
-          };
-
-          return frame(canvas, boundPagePadding);
-        } else {
-
-          boundPagePadding = {
-            top: framePadding.top,
-            bottom: framePadding.bottom,
-            left: canvas.width * facingCanvasPadding / 100 / 2,
-            right: framePadding.right
-          };
-
-          return frame(canvas, boundPagePadding);
-        }
       });
+      if (viewingDirection === 'left-to-right') {
+        return pages.map(function (canvas, index) {
+          var boundPagePadding;
+
+          if (index === 0) {
+            boundPagePadding = {
+              top: framePadding.top,
+              bottom: framePadding.bottom,
+              left: framePadding.left,
+              right: framePadding.right
+            };
+            boundPagePadding.left = canvas.width + facingCanvasPadding / 100 * canvas.width;
+            return frame(canvas, boundPagePadding);
+          } else if ((index + 1) % 2 === 0) {
+            // gets all even pages and makes
+            // their facing page the next page
+            // in the index.
+            boundPagePadding = {
+              top: framePadding.top,
+              bottom: framePadding.bottom,
+              left: framePadding.left,
+              right: canvas.width * facingCanvasPadding / 100 / 2
+            };
+
+            return frame(canvas, boundPagePadding);
+          } else {
+
+            boundPagePadding = {
+              top: framePadding.top,
+              bottom: framePadding.bottom,
+              left: canvas.width * facingCanvasPadding / 100 / 2,
+              right: framePadding.right
+            };
+
+            return frame(canvas, boundPagePadding);
+          }
+        });
+      }
+      if (viewingDirection === 'right-to-left') {
+        return pages.map(function (canvas, index) {
+          var boundPagePadding;
+
+          if (index === 0) {
+            boundPagePadding = {
+              top: framePadding.top,
+              bottom: framePadding.bottom,
+              left: framePadding.left,
+              right: canvas.width * facingCanvasPadding / 100 / 2
+            };
+            boundPagePadding.left = canvas.width + facingCanvasPadding / 100 * canvas.width;
+            return frame(canvas, boundPagePadding);
+          } else if ((index + 1) % 2 === 0) {
+            // gets all even pages and makes
+            // their facing page the next page
+            // in the index.
+            boundPagePadding = {
+              top: framePadding.top,
+              bottom: framePadding.bottom,
+              left: framePadding.left,
+              right: canvas.width * facingCanvasPadding / 100 / 2
+            };
+
+            return frame(canvas, boundPagePadding);
+          } else {
+
+            boundPagePadding = {
+              top: framePadding.top,
+              bottom: framePadding.bottom,
+              left: canvas.width * facingCanvasPadding / 100 / 2,
+              right: framePadding.right
+            };
+
+            return frame(canvas, boundPagePadding);
+          }
+        });
+      }
     } else if (viewingMode === 'continuous') {
       // This just assumes we're talking horizontal.
       // As you can imagine, this is going to get out of
@@ -622,7 +666,8 @@ var manifestLayout = function (options) {
      * @returns {Object} x, y
      */
     addItem: function (frame) {
-      var lineItemWidth = frame.width;
+      var lineItemWidth = frame.width,
+          output;
 
       if (viewingMode === 'paged') {
         var facingFrame = this._getFacingFrame(frame.canvas.sequencePosition);
@@ -635,21 +680,34 @@ var manifestLayout = function (options) {
         }
       }
 
-      if (this.x + lineItemWidth > this.lineWidth) {
-        this.x = 0;
-        this.y += frame.height;
+      if (viewingDirection === 'left-to-right') {
+        if (this.x + lineItemWidth > this.lineWidth) {
+          this.x = 0;
+          this.y += frame.height;
+        }
+
+        output = {
+          x: this.x,
+          y: this.y
+        };
+
+        this.x += frame.width;
       }
-
-      var output = {
-        x: this.x,
-        y: this.y
-      };
-
-      this.x += frame.width;
-
       if (viewingDirection === 'right-to-left') {
-        output.x = this.lineWidth - this.x;
+        if (this.x - lineItemWidth > this.lineWidth) {
+          this.x = 0;
+          this.y += frame.height;
+        }
+
+        output = {
+          x: this.lineWidth - (this.x - lineItemWidth),
+          y: this.y
+        };
+
+        this.x += frame.width;
       }
+      if (viewingDirection === 'top-to-bottom') {}
+      if (viewingDirection === 'bottom-to-top') {}
 
       return output;
     }
@@ -696,7 +754,7 @@ var manifestLayout = function (options) {
     return frames;
   }
 
-  function overviewLayout(anchor) {
+  function overviewLayout() {
     // configure for viewingDirection, viewingMode, framing technique,
     // and alignment Style.
     var frames = bindCanvases(canvases.map(pruneCanvas).map(function (canvas) {
@@ -704,8 +762,7 @@ var manifestLayout = function (options) {
       return fitHeight(canvas, canvasHeight);
     }), viewingMode, viewingDirection, framePadding, facingCanvasPadding);
 
-    frames = fixedHeightAlign(frames, viewport.paddedWidth);
-    // frames = alignToAnchor(frames, anchor);
+    frames = addViewportPadding(fixedHeightAlign(frames, viewport.paddedWidth));
     frames = updateCanvases(frames);
     var selectedFrame = frames.filter(function (frame) {
       return frame.canvas.selected;
@@ -715,13 +772,11 @@ var manifestLayout = function (options) {
     return frames;
   }
 
-  function detailLayout(anchor) {
-    return detailLayoutHorizontal(anchor);
+  function detailLayout() {
+    return detailLayoutHorizontal();
   }
 
-  function detailLayoutHorizontal(anchor) {
-    // TODO: support viewingDirection and viewingMode
-
+  function detailLayoutHorizontal() {
     // configure for viewingDirection, viewingMode, framing technique,
     // and alignment Style.
     var frames = bindCanvases(canvases.map(pruneCanvas).map(function (canvas) {
@@ -732,22 +787,30 @@ var manifestLayout = function (options) {
     var x = 0;
     var y = 0;
 
-    frames.forEach(function (frame) {
-      frame.x = x;
-      frame.y = y;
-      x += frame.width;
-    });
-
-    // frames = alignToAnchor(frames, anchor);
-    updateCanvases(frames);
-    frames = intermediateLayoutHorizontal(frames);
+    if (viewingDirection === 'left-to-right') {
+      frames.forEach(function (frame) {
+        frame.x = x;
+        frame.y = y;
+        x += frame.width;
+      });
+      updateCanvases(frames);
+      frames = intermediateLayoutHorizontal(frames);
+    } else if (viewingDirection === 'right-to-left') {
+      frames.reverse().forEach(function (frame) {
+        frame.x = x;
+        frame.y = y;
+        x += frame.width;
+      });
+      updateCanvases(frames);
+      frames = intermediateLayoutHorizontal(frames.reverse());
+    }
     return frames;
   }
 
-  function intermediateLayout(anchor) {
+  function intermediateLayout() {
     // configure for viewingDirection, viewingMode,
     // and alignment Style (scaling).
-    return intermediateLayoutHorizontal(overviewLayout(anchor));
+    return intermediateLayoutHorizontal(overviewLayout());
   }
 
   function intermediateLayoutHorizontal(frames) {
@@ -766,13 +829,25 @@ var manifestLayout = function (options) {
           if (viewingMode === 'paged' && frame.canvas.id === facingCanvas.id) {
             return;
           }
-          // These are the canvases within the same line of the overview layout.
-          if (index < canvasPosition) {
-            // Those to the left. Push them to the left, out of frame.
-            frame.x = frame.x - (selectedFrame.vantage.leftMargin + framePadding.left);
-          } else {
-            // Those to the right. Push them to the right, out of frame.
-            frame.x = frame.x + (selectedFrame.vantage.rightMargin + framePadding.right);
+
+          if (viewingDirection === 'left-to-right') {
+            // These are the canvases within the same line of the overview layout.
+            if (index < canvasPosition) {
+              // Those to the left. Push them to the left, out of frame.
+              frame.x = frame.x - (selectedFrame.vantage.leftMargin + framePadding.left);
+            } else {
+              // Those to the right. Push them to the right, out of frame.
+              frame.x = frame.x + (selectedFrame.vantage.rightMargin + framePadding.right);
+            }
+          } else if (viewingDirection === 'right-to-left') {
+            // These are the canvases within the same line of the overview layout.
+            if (index > canvasPosition) {
+              // Those to the left. Push them to the left, out of frame.
+              frame.x = frame.x - (selectedFrame.vantage.leftMargin + framePadding.left);
+            } else {
+              // Those to the right. Push them to the right, out of frame.
+              frame.x = frame.x + (selectedFrame.vantage.rightMargin + framePadding.right);
+            }
           }
         } else if (frame.y > selectedFrame.y) {
           // These are all the canvases below the selected canvas
@@ -831,6 +906,14 @@ var manifestLayout = function (options) {
     };
   }
 
+  function addViewportPadding(frames) {
+    return frames.map(function (frame) {
+      frame.x = frame.x + containerWidth * viewport.padding.left / 100;
+      frame.y = frame.y + containerHeight * viewport.padding.top / 100;
+      return frame;
+    });
+  }
+
   function getOverviewVantage(frames) {
     // calculates the viewport dimensions
     // that center the selected canvas in the
@@ -852,12 +935,15 @@ var manifestLayout = function (options) {
 
       // Consider adapting for another "clamp" function
       // to keep the vantage within "viewport/layout" bounds.
+      // This will need to also take into account the viewing
+      // direction.
       var selectedVantageTop = selectedFrameCenter.y - vantage.height / 2;
-      //     selectedVantageBottom = selectedFrameCenter + vantage.height/2,
-      //     selectedVantageLeft = selectedFrameCenter - vantage.width/2,
-      //     selectedVantageRight = selectedFrameCenter + vantage.width/2;
+      // selectedVantageBottom = selectedFrameCenter + vantage.height/2,
+      // selectedVantageLeft = selectedFrameCenter.x - vantage.width/2,
+      // selectedVantageRight = selectedFrameCenter + vantage.width/2;
 
-      vantage.y = selectedVantageTop;
+      vantage.x = 0;
+      vantage.y = selectedVantageTop < 0 ? 0 : selectedVantageTop;
       return vantage;
     } else {
       return vantage;
@@ -1005,7 +1091,7 @@ var manifestLayout = function (options) {
 
     // This returned data is the representation of the viewport in
     // the coordinate system of the images and overlays (the "world")
-    // coordinates. OSD/D3, other rendering environments can use this
+    // coordinates. OSD, D3, or other rendering environments can use this
     // to position the camera.
     var vantage = {
       x: boundingBox.x - horizontalMargin,
@@ -1042,11 +1128,6 @@ var manifestLayout = function (options) {
 
     return paddedVantage;
   }
-
-  // Intended for framing any number of canvases (a range),
-  // instead of only two.
-  // function getBoundingBoxForCanvases(selectedCanvases) {
-  // }
 
   function getFacingCanvas(canvas, frames) {
     var selectedIndex;
@@ -21971,6 +22052,7 @@ var ImageResource = function(config) {
   this.bounds = config.bounds || {x:0, y:0, width:1,height:1};
   this.zIndex = config.zIndex;
   this.tileSource = config.tileSource;
+  this.thumbUrl = config.thumbUrl;
   this.dynamic = config.dynamic || false;
   this.imageType = config.imageType || "main"; // can be 'main', 'alternate', 'detail' or 'thumbnail'
   this.status = 'initialized'; // can be 'requested', 'pending','shown', or 'failed'
@@ -22061,6 +22143,10 @@ ImageResource.prototype = {
 
   getStatus: function() {
     return this.status;
+  },
+
+  remove: function() {
+    this.dispatcher.emit('image-removed', this);
   },
 
   moveToIndex: function(index) {
@@ -22165,16 +22251,16 @@ var _buildImageConfig = function(resource) {
     }
   };
 
-  var imageTileSource = _getImageTilesource();
+  console.log(_getImageTilesource());
 
   return {
     // the ID is to use in the DOM, so remove special characters. The URL may not be unique, so add a salt.
     id: id.replace(/[^a-z0-9-_]+/gi, "") + Math.floor(Math.random() * 1000),
     label: resource.label,
-    tileSource: imageTileSource,
+    tileSource: _getImageTilesource(),
     clipRegion: _getSegmentFromUrl(id),
     dynamic: isDynamic,
-    // thumbnailUrl: ThumbnailFactory({images:[resource]}).tileSource.levels[0].url
+    thumbUrl: ThumbnailFactory.getThumbUrl(resource, 200)
   };
 };
 
@@ -22229,25 +22315,28 @@ var ImageResourceFactory = function(image, parent) {
   };
 
   switch(resourceType) {
-    case 'dctypes:Image':
-      var config = _buildImageConfig(image.resource);
+  case 'dctypes:Image':
+  case 'dcTypes:Image':
+  case 'dcterms:Image':
+  case 'dcTerms:Image':
+    var config = _buildImageConfig(image.resource, parent);
+    return _makeImageFromConfig(config);
+  case 'oa:Choice':
+    var configs = _buildChoiceConfigs(image.resource);
+    return configs.map(function(config) {
       return _makeImageFromConfig(config);
-    case 'oa:Choice':
-      var configs = _buildChoiceConfigs(image.resource);
-      return configs.map(function(config) {
-        return _makeImageFromConfig(config);
-      });
-    case 'oa:SpecificResource':
-      var resource = image.resource;
-      config = _buildImageConfig(resource);
+    });
+  case 'oa:SpecificResource':
+    var resource = image.resource;
+    config = _buildImageConfig(resource);
 
-      if(config && resource.selector && resource.selector.region) {
-        var clipArray = resource.selector.region.split(',');
-        config.clipRegion = _getRectFromStringArray(clipArray);
-      }
-      return _makeImageFromConfig(config);
-    default:
-      throw new Error("Cannot create an image from type " + resourceType);
+    if(config && resource.selector && resource.selector.region) {
+      var clipArray = resource.selector.region.split(',');
+      config.clipRegion = _getRectFromStringArray(clipArray);
+    }
+    return _makeImageFromConfig(config);
+  default:
+    throw new Error("Cannot create an image from type " + resourceType);
   }
 };
 
@@ -22259,9 +22348,11 @@ module.exports = ImageResourceFactory;
 var ImageResource = require('./ImageResource');
 var imageFormatError = "Unsupported image format for LegacyTileSource.";
 
-var _getResourceFormat = function(mimeType) {
+var getResourceFormat = function(mimeType) {
   switch(mimeType) {
   case('image/jpeg'):
+    return 'jpg';
+  case('image/jpg'):
     return 'jpg';
   case('image/png'):
     return 'png';
@@ -22272,23 +22363,35 @@ var _getResourceFormat = function(mimeType) {
   }
 };
 
-var _getThumbUrl = function(resource, width) {
+var getThumbUrl = function(resource, width) {
 
-  var _buildResourceSize = function() {
+  var serviceVersion;
+  if (resource['@context'] == "http://iiif.io/api/image/2/context.json") {
+    serviceVersion = "2.0";
+  } else {
+    serviceVersion = "1.1";
+  }
+
+  var buildResourceSize = function() {
     return "/full/" + width + ",/";
+  };
+
+  var getTileBasename = function() {
+    if (serviceVersion === '2.0') return 'default';
+    return 'native';
   };
 
   var id = resource['@id'];
   if(!id.toLowerCase().match(/^.*\.(png|jpg|jpeg|gif)$/)) { // it is still a service URL
-    var format = _getResourceFormat(resource.format);
-    return resource.service['@id'] + _buildResourceSize() + '0/default.' + format;
+    var format = getResourceFormat(resource.format);
+    return resource.service['@id'] + buildResourceSize() + '0/' + getTileBasename() + '.' + format;
   }
   else { // we still don't want the full size
-    return id.replace("/full/full/", _buildResourceSize());
+    return id.replace("/full/full/", buildResourceSize());
   }
 };
 
-var _getThumbLevel = function(resource, width, height) {
+var getThumbLevel = function(resource, width, height) {
   var widthParam = 200,
       scaleFactor = widthParam/width,
       scaledWidth = width*scaleFactor,
@@ -22297,24 +22400,24 @@ var _getThumbLevel = function(resource, width, height) {
   if(resource.default) {
     // resources with a default field are not actually
     // images, but contain more images. Recurse to retrieve.
-    return _getThumbLevel(resource.default, scaledWidth, scaledHeight);
+    return getThumbLevel(resource.default, scaledWidth, scaledHeight);
   }
 
   return {
-    url: _getThumbUrl(resource, scaledWidth),
+    url: getThumbUrl(resource, scaledWidth),
     height: height,
     width: width
   };
 };
 
-var _makeThumbnailConfig = function(resource, parent) {
+var makeThumbnailConfig = function(resource, parent) {
   var bounds = parent.getBounds();
 
   return {
     tileSource: {
       type: 'legacy-image-pyramid',
       levels: [
-        _getThumbLevel(resource, bounds.width, bounds.height),
+        getThumbLevel(resource, bounds.width, bounds.height),
       ]
     },
     parent: parent,
@@ -22327,25 +22430,29 @@ var _makeThumbnailConfig = function(resource, parent) {
 var ThumbnailFactory = function(canvas, parent) {
   // The canvas has a thumbnail object.
   if(canvas.thumbnail) {
-    return new ImageResource(_makeThumbnailConfig(canvas.thumbnail, parent));
+
+    return new ImageResource(makeThumbnailConfig(canvas.thumbnail, parent));
   }
 
   // If the canvas has no thumbnail object, we try to fall back to using an image from it.
   // If the canvas has no images and no thumbnail, we can't do anything, so we don't bother.
   if(canvas.images) {
     try {
-      var config = _makeThumbnailConfig(canvas.images[0].resource, parent);
+      var config = makeThumbnailConfig(canvas.images[0].resource, parent);
       return new ImageResource(config);
     } catch (error){
       // If we can't use LegacyTileSource to build the thumbnail, don't build a thumbnail.
       if(error == imageFormatError) {
-        return;
+        return 'A thumbnail cannot be built for this object';
       } else {
         throw (error);
       }
     }
   }
+  return undefined;
 };
+
+ThumbnailFactory.getThumbUrl = getThumbUrl;
 
 module.exports = ThumbnailFactory;
 
@@ -22387,7 +22494,7 @@ var CanvasObject = function(config) {
 };
 
 CanvasObject.prototype = {
-  //Assumes that the point parameter is already in viewport coordinates.
+  // Assumes that the point parameter is already in viewport coordinates.
   containsPoint: function(point) {
     var rectRight = this.bounds.x + this.bounds.width;
     var rectBottom = this.bounds.y + this.bounds.height;
@@ -22399,16 +22506,12 @@ CanvasObject.prototype = {
     return this.images.filter(function(image) { return image.visible === true; });
   },
 
-  getDetailImages: function() {
-    return this.images.filter(function(image) { return image.imageType === "detail"; });
-  },
-
   getAlternateImages: function() {
     return this.images.filter(function(image) { return image.imageType === "alternate"; });
   },
 
-  getMainImage: function() {
-    return this.images.filter(function(image) { return image.imageType === "main"; })[0];
+  getMainImages: function() {
+    return this.images.filter(function(image) { return image.imageType === "main"; });
   },
 
   getImageById: function(id) {
@@ -22474,16 +22577,32 @@ CanvasObject.prototype = {
   },
 
   show: function(timeout) {
+    var self = this;
+
     if (!this.needed) {
       this.setNeeded(true);
     }
+
     this.visible = true;
-    this.dispatcher.emit('image-show', this);
+    this.getMainImages().forEach(function(image) {
+
+      image.show();
+
+      function removeThumb() {
+        if (image.getStatus() === 'drawn') {
+          self.thumbnailResource.remove();
+        }
+      }
+
+      self.dispatcher.on('image-status-updated', removeThumb);
+    });
+
+    this.dispatcher.emit('canvas-show', this);
   },
 
   hide: function(timeout) {
     this.visible = false;
-    this.dispatcher.emit('image-hide', this);
+    this.dispatcher.emit('canvas-hide', this);
   },
 
   getVisible: function() {
@@ -22524,8 +22643,6 @@ CanvasObject.prototype = {
     this._floatImagesToBottom();
     var oldIndex = this.images.indexOf(image);
 
-    console.log("old index: " + oldIndex);
-    console.log("index: " + index);
     if (index === oldIndex || oldIndex === -1 ) {
       // Index either is invalid or is the same
       // as the previous index, requiring no change.
@@ -22597,11 +22714,12 @@ var d3Renderer = function(config) {
   buildContainers();
   immediateUpdate();
 
-  dispatcher.on('currentZoomUpdated', setZoomRegion);
+  // dispatcher.on('currentZoomUpdated', setZoomRegion);
   dispatcher.on('perspectiveUpdated', changePerspective);
-  // dispatcher.on('selectCanvas', selectCanvas);
+  dispatcher.on('canvasNavigated', navigateCanvas);
+  dispatcher.on('newCanvasSelected', selectCanvas);
   dispatcher.on('viewingModeUpdated', changeViewingMode);
-  // dispatcher.on('changeViewingDirection', changeViewingMode);
+  dispatcher.on('changeViewingDirection', changeViewingDirection);
   dispatcher.on('scaleFactorUpdated', immediateUpdate);
   dispatcher.on('sizeUpdated', immediateUpdate);
   dispatcher.on('image-status-updated', updateThumb);
@@ -22624,7 +22742,7 @@ var d3Renderer = function(config) {
       });
 
     scrollContainer.on('scroll', function(event) {
-      renderState.overviewScrollPosition(this.scrollTop);
+      renderState.scrollPosition(this.scrollTop);
     });
 
     container = scrollContainer.selectAll('.manifest-layouts-DOM-container')
@@ -22638,14 +22756,12 @@ var d3Renderer = function(config) {
         height: '100%',
         position: 'absolute',
         top: 0,
-        left: 0
+        left: 0,
+        'pointer-events': 'none'
       });
-
   }
-  enableOverviewScrollEvents();
 
   function disableScrollEvents() {
-    var state = viewerState.getState();
     container
       .style('pointer-events', 'none');
 
@@ -22680,9 +22796,19 @@ var d3Renderer = function(config) {
     }
   }
   function setZoomRegion() {
+    if (!renderState.zooming() && viewerState.getState().perspective === 'overview') {
+      // We don't want OSD to drive in overview mode.
+      // D3 takes over in ovweview mode, so we do
+      // nothing in response to openseadragon readjusting itself,
+      // which would create a circular loop of
+      // events triggering events triggering events.
+      return;
+    }
     var scale = renderState.getState().currentZoom.scale;
     var center = renderState.getState().currentZoom.center;
     var transform = 'scale(' + scale + ') translate(' + -center.x + 'px,' + -center.y + 'px)';
+
+    scrollContainer.node().scrollTop = center.y;
 
     container
       .style('transform', transform)
@@ -22698,6 +22824,15 @@ var d3Renderer = function(config) {
 
     renderLayout(layout, false);
     renderState.constraintBounds(viewBounds, false);
+
+    var scale = renderState.getState().currentZoom.scale;
+    var center = renderState.getState().currentZoom.center;
+    var transform = 'scale(' + scale + ') translate(' + -center.x + 'px,' + -center.y + 'px)';
+
+    container
+      .style('transform', transform)
+      .style('-webkit-transform', transform);
+
     if (viewerState.getState().perspective === 'detail') {
       disableScrollEvents();
       scrollContainer
@@ -22708,6 +22843,7 @@ var d3Renderer = function(config) {
       enableOverviewScrollEvents();
     }
   }
+
   function changePerspective() {
     if (viewerState.getState().perspective === 'detail') {
       transitionToDetail();
@@ -22715,52 +22851,181 @@ var d3Renderer = function(config) {
     }
     transitionToOverview();
   }
-  function scrollOverview() {
-  }
+
   function transitionToOverview() {
     var stage1layout = calculateLayout('intermediate')(),
         stage2layout = calculateLayout('overview')(),
+        stage1viewBounds = stage1layout.filter(function(frame) {
+          return frame.canvas.selected;
+        })[0].vantage,
         stage2viewBounds = stage2layout.filter(function(frame) {
           return frame.canvas.selected;
         })[0].vantage;
 
-    renderState.constraintBounds(stage2viewBounds, true);
-    container
+    stage2viewBounds.width = viewerState.getState().width;
+    stage2viewBounds.height = viewerState.getState().height;
+
+    // Some initial event sending and setup to start the
+    // animation sequence.
+    renderState.constraintBounds(stage1viewBounds, false);
+    renderState.zooming(true);
+    scrollContainer
       .transition()
       .style('opacity', 1);
 
+    // Run stage 1 of the animation
     renderLayout(stage1layout, false, function() {
-      renderLayout(stage2layout, true);
+      // this callback does setup for stage 2 of the animation
+      // and then kicks it off.
       renderState.constraintBounds(stage2viewBounds, true);
-      enableOverviewScrollEvents();
+
+      renderLayout(stage2layout, true, function() {
+        // This callback signals the end of the transition.
+        renderState.zooming(false);
+        enableOverviewScrollEvents();
+        // var transform = 'scale(1) translate(0,0)';
+
+        // container
+        //   .style('transform', transform)
+        //   .style('-webkit-transform', transform);
+      });
     });
   }
+
   function transitionToDetail() {
+    // Setting up the keyFrame target parameters for
+    // the animation stages.
     var stage1layout = calculateLayout('intermediate')(),
         stage2layout = calculateLayout('detail')(),
         stage1viewBounds = stage1layout.filter(function(frame) {
           return frame.canvas.selected;
+        })[0].vantage,
+        stage2viewBounds = stage2layout.filter(function(frame) {
+          return frame.canvas.selected;
         })[0].vantage;
 
+    // Some initial event sending and setup to start the
+    // animation sequence.
     renderState.constraintBounds(stage1viewBounds, true);
+    renderState.zooming(true);
     disableScrollEvents();
-    container
+    scrollContainer
       .transition()
       .style('opacity', 0);
 
+    // Run stage 1 of the animation
     renderLayout(stage1layout, true, function() {
-      renderLayout(stage2layout, false);
+      // this callback does setup for stage 2 of the animation
+      // and then kicks it off.
+      renderState.constraintBounds(stage2viewBounds, false);
+
+      renderLayout(stage2layout, false, function() {
+        // This callback signals the end of the transition.
+        renderState.zooming(false);
+        dispatcher.emit('transitionComplete');
+      });
     });
   }
+  function anchorFrames(frames, anchor) {
+    var offsetx = 0;
+    var offsety = 0;
+
+    frames.foreach(function(frame) {
+      if (frame.canvas.selected) {
+        offsetx = anchor.x - (frame.x + frame.canvas.localx);
+        offsety = anchor.y - (frame.y + frame.canvas.localy);
+      }
+    });
+
+    frames.foreach(function(frame) {
+      frame.x += offsetx;
+      frame.y += offsety;
+    });
+
+    return frames;
+  }
   function selectCanvas() {
-    renderLayout(calculateLayout(),false);
+    // Setting up the keyFrame target parameters for
+    // the animation stages.
+    var stage1layout = calculateLayout('intermediate')(),
+        stage2layout = calculateLayout('detail')(),
+        stage1viewBounds = stage1layout.filter(function(frame) {
+          return frame.canvas.selected;
+        })[0].vantage,
+        stage2viewBounds = stage2layout.filter(function(frame) {
+          return frame.canvas.selected;
+        })[0].vantage;
+
+    // Some initial event sending and setup to start the
+    // animation sequence.
+    renderState.constraintBounds(stage1viewBounds, true);
+    renderState.zooming(true);
+    disableScrollEvents();
+    scrollContainer
+      .style('opacity', 0);
+    container
+      .transition()
+      .style('opactiy', 0);
+
+    // Run stage 1 of the animation
+    renderLayout(stage1layout, true, function() {
+      // this callback does setup for stage 2 of the animation
+      // and then kicks it off.
+      renderState.constraintBounds(stage2viewBounds, false);
+
+      renderLayout(stage2layout, false, function() {
+        // This callback signals the end of the transition.
+        renderState.zooming(false);
+        dispatcher.emit('transitionComplete');
+      });
+    });
+  }
+  function navigateCanvas() {
+    var stage1layout = calculateLayout('detail')(),
+        stage1viewBounds = stage1layout.filter(function(frame) {
+          return frame.canvas.selected;
+        })[0].vantage;
+    renderState.constraintBounds(stage1viewBounds, true);
+    disableScrollEvents();
+
+    renderLayout(stage1layout, true, function() {
+    });
   }
   function changeViewingMode() {
-    var stage2layout = calculateLayout(viewerState.getState().perspective)();
-    renderLayout(stage2layout, true);
+    var layout,
+        viewBounds;
+
+    if (viewerState.getState.perspective === 'overview') {
+      layout = calculateLayout(viewerState.getState().perspective)();
+      viewBounds = layout.filter(function(frame) {
+        return frame.canvas.selected;
+      })[0].vantage;
+
+      renderState.constraintBounds(viewBounds, true);
+      renderLayout(layout, true, function() {
+        dispatcher.emit('transitionComplete');
+      });
+    } else {
+      layout = calculateLayout(viewerState.getState().perspective)();
+      viewBounds = layout.filter(function(frame) {
+        return frame.canvas.selected;
+      })[0].vantage;
+
+      renderState.constraintBounds(viewBounds, true);
+      renderLayout(layout, true, function() {
+        dispatcher.emit('transitionComplete');
+      });
+    }
   }
   function changeViewingDirection() {
-    renderLayout(calculateLayout(),false);
+    var layout = calculateLayout(viewerState.getState().perspective)(),
+    viewBounds = layout.filter(function(frame) {
+      return frame.canvas.selected;
+    })[0].vantage;
+    renderState.constraintBounds(viewBounds,false);
+    renderLayout(layout, false, function() {
+      dispatcher.emit('transitionComplete');
+    });
   }
 
   function calculateLayout(layoutType) {
@@ -22774,14 +23039,9 @@ var d3Renderer = function(config) {
       viewingDirection: userState.viewingDirection,
       viewingMode: userState.viewingMode,
       canvasHeight: 200,
-      canvasWidth: 500,
+      canvasWidth: 200,
       selectedCanvas: userState.selectedCanvas,
-      framePadding: {
-        top: 10,
-        bottom: 40,
-        left: 10,
-        right: 10
-      },
+      framePadding: userState.framePadding,
       viewportPadding: userState.viewportPadding,
       minimumImageGap: 5, // precent of viewport
       facingCanvasPadding: 0.1 // precent of viewport
@@ -22793,9 +23053,8 @@ var d3Renderer = function(config) {
     // you need a general understanding of d3 selections,
     // and you will want to read about nested
     // selections in particular: http://bost.ocks.org/mike/nest/
-
     var animationTiming = animate ? 1000 : 0,
-    frame = container.selectAll('.' + frameClass).data(layoutData);
+        frame = container.selectAll('.' + frameClass).data(layoutData);
 
     // Update Existing Frame Elements
     frame
@@ -22857,10 +23116,18 @@ var d3Renderer = function(config) {
       .style('-webkit-transform', getEnterTranslate)
       .each(function(d) {
         var canvasData = d.canvas,
+            state = viewerState.getState(),
             canvasImageState = viewerState.getState().canvasObjects[canvasData.id];
 
         canvasImageState.setBounds(canvasData.x, canvasData.y, canvasData.width, canvasData.height);
-        canvasImageState.getThumbnailResource().show();
+
+        if (state.selectedCanvas !== canvasImageState.canvas['@id']) {
+          if (canvasImageState.getThumbnailResource()){
+            canvasImageState.getThumbnailResource().show();
+          }
+        } else {
+          canvasImageState.show();
+        }
       });
 
     frameEnter.append('div')
@@ -22873,9 +23140,10 @@ var d3Renderer = function(config) {
     // if it has been requested, add loading class
     // if drawn, add image and give it a class
     // to allow fading in.
-    // if failed, give it a failing class
+    // If failed, give it a failing class
     // if locked, add a lock class
-    if (imageResource.status === 'drawn') {
+    switch (imageResource.status) {
+    case 'drawn':
       container
         .selectAll('.' + frameClass)
         .filter(function(d) {
@@ -22887,11 +23155,17 @@ var d3Renderer = function(config) {
         .enter()
         .append('img')
         .attr('src', function(d) {
-          return imageResource.tileSource.levels[0].url;
+          return imageResource.parent.thumbnailResource.tileSource.levels[0].url;
         });
+      break;
+    case 'initialized':
+    case 'requested':
+    case 'failed':
+    case 'unauthorized':
     }
   }
 
+  // Various Utilities
   function getWidthInPx(d) {
     return d.width + 'px';
   }
@@ -22929,8 +23203,20 @@ var d3Renderer = function(config) {
   }
 
   function getClass(d) {
-    var selected = d.canvas.selected;
-    return selected ? canvasClass + ' selected' : canvasClass;
+    var canvasObject = viewerState.getState().canvasObjects[d.canvas.id],
+        selected = d.canvas.selected ? ' selected': '',
+        blank = canvasObject.images.length < 1 ? ' blank': '',
+        loading = '',
+        failed = '',
+        locked = '';
+
+    if (canvasObject.getThumbnailResource()) {
+      loading = canvasObject.getThumbnailResource().getStatus() === 'requested' ? ' loading': '';
+      failed = canvasObject.getThumbnailResource().getStatus() === 'failed' ? ' failed': '';
+      locked = canvasObject.getThumbnailResource().getStatus() === 'failed' ? ' locked': '';
+    }
+
+    return canvasClass + selected + blank + loading + failed + locked;
   }
 
   function endall(transition, callback) {
@@ -25454,14 +25740,15 @@ var viewerStateStore = require('./viewerState'),
     renderStateStore = require('./renderState'),
     OsdRenderer = require('./osdRenderer'),
     D3Renderer = require('./d3Renderer'),
-    events = require('events');
+    events = require('events'),
+    d3 = require('./lib/d3-slim-dist');
 
 var manifestor = function(options) {
   'use strict';
 
   var viewerState,
       renderState,
-      d3Renderer, // todo: name this better
+      d3Renderer,
       osdRenderer,
       dispatcher = new events.EventEmitter();
 
@@ -25489,14 +25776,6 @@ var manifestor = function(options) {
     frameClass: options.frameClass || 'frame',
     labelClass: options.labelClass || 'label'
   });
-
-  // function scrollHandler(event) {
-  //   if (viewerState.getState().perspective === 'overview' && renderState.getState().zooming === false) {
-  //     renderState.setState({ lastScrollPosition: $(this).scrollTop() });
-  //     osd.setViewerBoundsFromState(true);
-  //   }
-  // }
-
 
   // Do we really want to expose this?
   function setState(state) {
@@ -25642,28 +25921,72 @@ var manifestor = function(options) {
     dispatcher.emit('scaleFactorUpdated');
   }
 
-  function _navigate(forward) {
-    // var state = viewerState.getState();
-    // var currentCanvasIndex = viewerState.selectedCanvasObject().index;
-    // var incrementValue = forward ? 1 : -1;
+  function navigate(forward) {
+    var state = viewerState.getState();
+    var currentCanvasIndex = viewerState.selectedCanvasObject().index;
+    var incrementValue = forward ? 1 : -1;
 
-    // if(state.viewingMode === 'paged') {
-    //   canvasUtils.navigatePaged(currentCanvasIndex, incrementValue);
-    // } else {
-    //   canvasUtils.navigateIndividual(currentCanvasIndex, incrementValue);
-    // }
+    if(state.viewingMode === 'paged') {
+      navigatePaged(currentCanvasIndex, incrementValue);
+    } else {
+      navigateIndividual(currentCanvasIndex, incrementValue);
+    }
+  }
+
+  function navigateIndividual(currentIndex, incrementValue) {
+    var newIndex = currentIndex + incrementValue;
+
+    // do nothing if newIndex is out of range
+    if (viewerState.isValidCanvasIndex(newIndex)) {
+      selectCanvasForIndex(newIndex);
+    }
+  }
+
+  function navigatePaged(currentIndex, incrementValue) {
+    var newIndex = currentIndex + incrementValue;
+
+    if (currentIndex % 2 !== 0) {
+      newIndex = currentIndex + (2 * incrementValue);
+      if (newIndex < 0) newIndex = 0;
+    }
+
+    // return if newIndex is out of range
+    if (!viewerState.isValidCanvasIndex(newIndex)) {
+      return;
+    }
+
+    var getCanvasByIndex = function(index) {
+      var canvasId = viewerState.getState().canvases[index]['@id'];
+      return viewerState.getState().canvasObjects[canvasId];
+    };
+
+    // Do not select non-paged canvases in paged mode. Instead, find the next available
+    // canvas that does not have that viewingHint.
+    var newCanvas = getCanvasByIndex(newIndex);
+    while(newCanvas.viewingHint === 'non-paged' && viewerState.isValidCanvasIndex(newIndex)) {
+      newIndex += incrementValue;
+      newCanvas = getCanvasByIndex(newIndex);
+    }
+
+    // Load tilesource for the non-selected side of the pair, if it exists
+    var facingPageIndex = newIndex + incrementValue;
+    selectCanvasForIndex(newIndex);
+  }
+
+  function selectCanvasForIndex(index) {
+    var canvasId = viewerState.getState().canvases[index]['@id'];
+    viewerState.selectedCanvasObject(canvasId);
   }
 
   function next() {
-    _navigate(true);
+    navigate(true);
   }
 
   function previous() {
-    _navigate(false);
+    navigate(false);
   }
 
   function destroy() {
-    // TODO: is there more cleanup needed?
     if (osdRenderer.osd) {
       osdRenderer.osd.destroy();
     }
@@ -25680,7 +26003,6 @@ var manifestor = function(options) {
 
   return {
     // Actions to update the internal state.
-    // setScrollPosition: setScrollPosition,
     next: next,
     previous: previous,
     resize: resize,
@@ -25707,7 +26029,7 @@ var manifestor = function(options) {
 
 module.exports = manifestor;
 
-},{"./d3Renderer":8,"./osdRenderer":11,"./renderState":12,"./viewerState":13,"events":1}],11:[function(require,module,exports){
+},{"./d3Renderer":8,"./lib/d3-slim-dist":9,"./osdRenderer":11,"./renderState":12,"./viewerState":13,"events":1}],11:[function(require,module,exports){
 require('openseadragon');
 
 var OsdRenderer = function(options) {
@@ -25724,14 +26046,18 @@ var OsdRenderer = function(options) {
   this.addOSDHandlers(this.viewerState, this.renderState);
 
   this.dispatcher.on('canvas-position-updated', function(canvasObject) {
-    self.viewer.forceRedraw();
-    canvasObject.images.forEach(function(imageResource) {
-      self.updateImagePosition(imageResource);
-    });
-    self.updateImagePosition(canvasObject.thumbnailResource);
+    if (canvasObject.images.length > 0) {
+      canvasObject.images.forEach(function(imageResource) {
+        self.updateImagePosition(imageResource);
+      });
+      self.updateImagePosition(canvasObject.thumbnailResource);
+    }
+  });
+  this.dispatcher.on('image-removed', function(imageResource) {
+    self.removeTilesource(imageResource);
   });
   this.dispatcher.on('image-needed', function(imageResource) {
-    self.viewer.forceRedraw();
+    console.log(imageResource);
     self.openTileSource(imageResource);
   });
   this.dispatcher.on('image-show', function(imageResource) {
@@ -25752,57 +26078,46 @@ var OsdRenderer = function(options) {
       self.updateImageOpacity(imageResource);
     }
   });
-
   this.dispatcher.on('constraintBoundsUpdated', function(animate) {
     self.setViewerBoundsFromState(animate);
+    if (!animate) {
+      self.viewer.forceRedraw();
+      self.renderState.currentZoom({
+        scale: self.getViewerScale(),
+        center: self.getZoomTranslation()
+      });
+    }
   });
   this.dispatcher.on('overviewScrollPositionUpdated', function() {
-    self.setViewerBoundsFromState(false);
+
+    var rState = self.renderState.getState();
+    var viewBounds = new OpenSeadragon.Rect(
+      rState.constraintBounds.x,
+      rState.scrollPosition + rState.constraintBounds.y,
+      rState.constraintBounds.width,
+      rState.constraintBounds.height
+    );
+
+    self.viewer.viewport.fitBounds(viewBounds, true);
   });
-  // this.dispatcher.on('selectCanvas', self.selectCanvas);
-  // this.dispatcher.on('changeViewingMode', self.changeViewingMode);
-  // this.dispatcher.on('changeViewingDirection', self.changeViewingMode);
-  // this.dispatcher.on('translateZoom', self.translateZoom);
+  this.dispatcher.on('perspectiveUpdated', function() {
+    self.changePerspective(self.viewerState.getState().perspective);
+  });
+  this.dispatcher.on('transitionComplete', function() {
+    if(self.viewerState.getState().perspective === 'detail') {
+      self.enableZoomAndPan();
+    }
+  });
 };
 
 OsdRenderer.prototype = {
-  immediateUpdate: function() {
-    // Set the viewport to the correct
-    // zoom level and framing area.
-    this.setViewerBoundsFromState(false);
-    this.viewer.viewport.fitBounds(this.renderState.getState().constraintBounds, false);
-  },
   changePerspective: function(perspective) {
-    if (perspective === 'detail') {
-      // enable zooming and stuff
+    var self = this;
+    if (perspective === 'overview') {
+      // disable zooming
+      self.disableZoomAndPan();
       return;
     }
-    // disable zooming and stuff
-  },
-  transitionToOverview: function() {
-    // Zoom out to the overview
-    // target area for the selected
-    // canvas with an animation.
-  },
-  transitionToDetail: function() {
-    // Zoom in to the detail view
-    // target area for the selected
-    // canvas with an animation.
-  },
-  selectCanvas: function() {
-    // Pan and Zoom to the target
-    // area with an animation.
-  },
-  changeViewingMode: function() {
-    // Pan and Zoom to the frame
-    // area with an animation.
-  },
-  changeViewingDirection: function() {
-    // Zoom out to image constraints
-    // for currently selected image.
-  },
-
-  tileSourceConfig: function(imageResource) {
   },
 
   updateItemIndex: function() {
@@ -25811,23 +26126,14 @@ OsdRenderer.prototype = {
     }
   },
 
-  getTileSourceFromImageResource: function() {
-    return {};
-  },
+  removeTilesource: function(imageResource) {
+    var self = this;
 
-  removeThumbnail: function(imageResource) {
-    if(imageResource.thumbnail){
-      imageResource.thumbnail.fade(0);
-      imageResource.thumbnail.removeFromCanvas();
-      imageResource.thumbnail.destroy();
-      delete imageResource.thumbnail;
-    }
-  },
-
-  removeTilesource: function(imageResourceID) {
-    if(this.tiledImage) {
-      this.viewer.world.removeItem(this.tiledImage);
-      this.tiledImage = null;
+    if(imageResource.osdTiledImage) {
+      self.fadeTilesource(imageResource.osdTiledImage, imageResource.osdTiledImage.getOpacity(), 0, function() {
+        // When the tilesource is visually removed, remove it from the scene stack.
+        self.viewer.world.removeItem(imageResource.osdTiledImage);
+      });
     }
   },
 
@@ -25914,15 +26220,16 @@ OsdRenderer.prototype = {
       bounds = new OpenSeadragon.Rect(bounds.x, bounds.y, bounds.width, bounds.height);
       // the "true" second argument is the "immediately" flag,
       // telling osd not to animate.
+      this.viewer.forceRedraw();
       imageResource.osdTiledImage.setPosition(bounds.getTopLeft(), true);
       imageResource.osdTiledImage.setWidth(bounds.width, true);
     }
   },
 
-  fadeTilesource: function(startingOpacity, targetOpacity, callback) {
+  fadeTilesource: function(tileSource, startingOpacity, targetOpacity, callback) {
     var self = this;
 
-    var step = (targetOpacity - currentOpacity) / 30;
+    var step = (targetOpacity - startingOpacity) / 30;
     if (step === 0) {
       if (callback) callback();
       return;
@@ -25931,12 +26238,12 @@ OsdRenderer.prototype = {
     var frame = function() {
       startingOpacity += step;
       if ((step > 0 && startingOpacity >= targetOpacity) || (step < 0 && startingOpacity <= targetOpacity)) {
-        self.setOpacity(targetOpacity);
+        tileSource.setOpacity(targetOpacity);
         if (callback) callback();
         return;
       }
 
-      self.setOpacity(startingOpacity);
+      tileSource.setOpacity(startingOpacity);
       OpenSeadragon.requestAnimationFrame(frame);
     };
     OpenSeadragon.requestAnimationFrame(frame);
@@ -26052,9 +26359,9 @@ OsdRenderer.prototype = {
         }
 
         if (changed) {
-          self.renderState.inZoomConstraints(false);
-          self.viewer.viewport.fitBounds(constraintBounds, false);
           self.renderState.inZoomConstraints(true);
+          self.viewer.viewport.fitBounds(constraintBounds, false);
+          self.renderState.inZoomConstraints(false);
         }
       }
 
@@ -26067,6 +26374,7 @@ OsdRenderer.prototype = {
     };
 
     this.viewer.addHandler('animation', function(event) {
+      self.viewer.forceRedraw();
       self.renderState.currentZoom({
         scale: self.getViewerScale(),
         center: self.getZoomTranslation()
@@ -26075,7 +26383,7 @@ OsdRenderer.prototype = {
 
     this.viewer.addHandler('zoom', function(event) {
       if (self.viewerState.getState().perspective === 'detail') {
-        // _applyConstraints();
+        _applyConstraints();
       }
       // getting the center won't work if there isn't a tilesource
       // already opened, because openseadragon doesn't have a concept
@@ -26086,7 +26394,7 @@ OsdRenderer.prototype = {
 
     this.viewer.addHandler('pan', function(event) {
       if (self.viewerState.getState().perspective === 'detail') {
-        // _applyConstraints();
+        _applyConstraints();
       }
       var zoom = self.viewer.viewport.getZoom();
       _semanticZoom(zoom, event.center);
@@ -26102,7 +26410,7 @@ var renderState = function(config) {
     zooming: false,
     constraintBounds: config.constraintBounds,
     inZoomConstraints: config.inZoomConstraints,
-    scrollPosition: config.lastScrollPosition,
+    scrollPosition: 0,
     overviewLeft: config.overviewLeft,
     overviewTop: config.overviewTop
   },
@@ -26113,11 +26421,12 @@ var renderState = function(config) {
   }
 
   function zooming(zooming) {
-    return state.zooming;
-  }
-
-  function overviewScrollPosition(scrollPosition) {
-    dispatcher.emit('overviewScrollPositionUpdated');
+    if (!arguments.length) {
+      return state.zooming;
+    } else  {
+      state.zooming = zooming;
+      return state.zooming;
+    }
   }
 
   function constraintBounds(constraints, animate) {
@@ -26149,12 +26458,21 @@ var renderState = function(config) {
     }
   }
 
+  function scrollPosition(scrollPosition) {
+    if (!arguments.length) {
+      return state.scrollPosition;
+    } else  {
+      state.scrollPosition = scrollPosition;
+      dispatcher.emit('overviewScrollPositionUpdated');
+      return state.scrollPosition;
+    }
+  }
+
   return {
     zooming: zooming,
     constraintBounds: constraintBounds,
-    overviewScrollPosition: overviewScrollPosition,
     inZoomConstraints: inZoomConstraints,
-    scrollPosition: 0,
+    scrollPosition: scrollPosition,
     overviewLeft: 0,
     overviewTop: 0,
     getState: getState,
@@ -26180,8 +26498,8 @@ var viewerState = function(config) {
         viewingDirection : config.viewingDirection ? config.viewingDirection : getViewingDirection(config.sequence, config.manifest), // manifest derived or user specified (iiif viewingHint)
         width : config.width,
         height : config.height,
-        scaleFactor: config.scaleFactor,
-        framePadding : config.framePadding,
+        scaleFactor: config.scaleFactor || 0.5,
+        framePadding : config.framePadding || {top: 10, bottom: 40, right: 10, left: 10},
         viewportPadding : config.viewportPadding,
         minimumImageGap : config.viewportPadding,
         facingCanvasPadding : config.facingCanvasPadding
@@ -26222,7 +26540,6 @@ var viewerState = function(config) {
   }
 
   function setState(newState, actionType) {
-    console.log('started');
     var differences = {};
     for(var key in newState) {
       if(newState.hasOwnProperty(key)) {
@@ -26239,9 +26556,32 @@ var viewerState = function(config) {
   }
 
   function selectedCanvasObject(newCanvas) {
+
     if (!arguments.length) {
       return state.canvasObjects[state.selectedCanvas];
     } else  {
+      var canvas,
+          adjacentCanvases,
+          sourcePerspective = state.perspective;
+      if (sourcePerspective === 'detail') {
+        setState({
+          selectedCanvas: newCanvas
+        });
+
+        // Mark all canvases as "needed" that may be in a view with this canvas
+        // This is accomplished by means of the "show" method on its image resources.
+        canvas = state.canvasObjects[state.selectedCanvas];
+        adjacentCanvases = getNeededCanvases(canvas);
+        canvas.show();
+        adjacentCanvases.forEach(function(canvas){
+          canvas.show();
+        });
+
+        dispatcher.emit('canvasNavigated', {from: sourcePerspective});
+        dispatcher.emit('selectedCanvasUpdated', {from: sourcePerspective});
+        return state.canvasObjects[state.selectedCanvas];
+      }
+
       setState({
         selectedCanvas: newCanvas,
         perspective: 'detail'
@@ -26249,17 +26589,27 @@ var viewerState = function(config) {
 
       // Mark all canvases as "needed" that may be in a view with this canvas
       // This is accomplished by means of the "show" method on its image resources.
-      state.canvasObjects[state.selectedCanvas].images.filter(function(image) {
-        console.log(image.getImageType());
-        return (image.getImageType() === 'main');
-      }).forEach(function(image) {
-        console.log(image);
-        image.show();
-      });
-      dispatcher.emit('canvas-selected', { detail: newCanvas });
-      console.log('canvasSet');
+      canvas = state.canvasObjects[state.selectedCanvas];
+      adjacentCanvases = state.canvasObjects.indexOf(canvas);
+      canvas.show();
+
+      dispatcher.emit('newCanvasSelected', {from: sourcePerspective});
+      dispatcher.emit('selectedCanvasUpdated', {from: sourcePerspective});
       return state.canvasObjects[state.selectedCanvas];
     }
+  }
+
+  function getNeededCanvases(canvas) {
+    var self = this;
+    var canvasIndex = state.canvasObjects.indexOf(canvas);
+    var neededIndices = canvasIndex > 0 ? [canvasIndex - 1, canvasIndex + 1] : [ canvasIndex + 1];
+
+    if (canvasIndex === state.canvasObjects.length - 1) {
+      neededIndices = [canvasIndex -2, canvasIndex - 1];
+    }
+    return neededIndices.map(function(index){
+      return state.canvasObjects[index];
+    });
   }
 
   function canvases(canvases) {
@@ -26268,7 +26618,7 @@ var viewerState = function(config) {
     } else  {
       state.canvases = state.canvases;
       state.selectedCanvas = canvases.some(function(canvas){
-        return
+        return;
       }) ? state.selectedCanvas : canvases[0]['@id'];
       dispatcher.emit('canvasesUpdated');
       return state.canvases;
@@ -26280,7 +26630,16 @@ var viewerState = function(config) {
       return state.perspective;
     } else  {
       state.perspective = perspective;
+      if (perspective === 'detail') {
+        var canvas = state.canvasObjects[state.selectedCanvas];
+        canvas.images.filter(function(image) {
+          return (image.getImageType() === 'main');
+        }).forEach(function(image) {
+          image.show();
+        });
 
+        canvas.thumbnailResource.remove();
+      }
       dispatcher.emit('perspectiveUpdated');
       return state.perspective;
     }
@@ -26296,10 +26655,10 @@ var viewerState = function(config) {
     }
   }
 
-  function size(height, width) {
+  function size(width, height) {
     if (!arguments.length) {
       return {
-        width:state.width,
+        width: state.width,
         height: state.height
       };
     } else  {
@@ -26313,52 +26672,8 @@ var viewerState = function(config) {
     }
   }
 
-  function navigatePaged(currentIndex, incrementValue) {
-    // Simply set which ones are "needed", let osd do the rest.
-    var self = this;
-    var newIndex = currentIndex + incrementValue;
-
-    if (currentIndex % 2 !== 0) {
-      newIndex = currentIndex + (2 * incrementValue);
-    }
-
-    // return if newIndex is out of range
-    if (!this.isValidCanvasIndex(newIndex)) {
-      return;
-    }
-
-    var getCanvasByIndex = function(index) {
-      var canvasId = self.canvases[index]['@id'];
-      return self.canvasObjects[canvasId];
-    };
-
-    // Do not select non-paged canvases in paged mode. Instead, find the next available
-    // canvas that does not have that viewingHint.
-    var newCanvas = getCanvasByIndex(newIndex);
-    while(newCanvas.viewingHint === 'non-paged' && this.isValidCanvasIndex(newIndex)) {
-      newIndex += incrementValue;
-      newCanvas = getCanvasByIndex(newIndex);
-    }
-
-    // this.loadTileSourceForIndex(newIndex);
-
-    // Load tilesource for the non-selected side of the pair, if it exists
-    var facingPageIndex = newIndex + incrementValue;
-    if(this.isValidCanvasIndex(facingPageIndex)) {
-      // this.loadTileSourceForIndex(facingPageIndex);
-    }
-
-    self.selectCanvasForIndex(newIndex);
-  }
-
-  function navigateIndividual(currentIndex, incrementValue) {
-    var newIndex = currentIndex + incrementValue;
-
-    // do nothing if newIndex is out of range
-    if (this.isValidCanvasIndex(newIndex)) {
-      // this.loadTileSourceForIndex(newIndex);
-      this.selectCanvasForIndex(newIndex);
-    }
+  function isValidCanvasIndex(index) {
+    return(index >= 0 && index <= state.canvases.length);
   }
 
   // Listen for actions. This wrapper responds to asynchronous
@@ -26369,6 +26684,7 @@ var viewerState = function(config) {
     setState: setState,
     selectedCanvasObject: selectedCanvasObject,
     selectedPerspective: selectedPerspective,
+    isValidCanvasIndex: isValidCanvasIndex,
     canvases: canvases,
     size: size
   };
