@@ -20,38 +20,51 @@
     <script type="text/javascript">
 
      $(function() {
-        url = window.location.href;
-        var regex = new RegExp("[?&]pid(=([^&#]*)|&|#|$)"),
-                results = regex.exec(url);
-        manURL = window.location.protocol + "//search.lib.virginia.edu/catalog/uva-lib:0/iiif/manifest.json";
-        if (results) { if (results[2]) {
-                manURL = window.location.protocol + "//search.lib.virginia.edu/catalog/" + results[2] + "/iiif/manifest.json";
-        } }
+       // Example:
+       // "https://mirador.library.virginia.edu/?pid=tsb:64346&manifest=%22https://search.lib.virginia.edu/catalog/tsb:64346/iiif/manifest.json%22&canvas=%22https://iiif.lib.virginia.edu/iiif/dl/tsb:64346/canvas/c11%22";
+       url = window.location.href;
+       var regex1 = new RegExp("[?&]pid(=([^&#]*)|&|#|$)"),
+               pid = regex1.exec(url);
+       var regex2 = new RegExp("[?&]canvas(=([^&#]*)|&|#|$)"),
+               canvas = regex2.exec(url);
+       var regex3 = new RegExp("[?&]manifest(=([^&#]*)|&|#|$)"),
+               manifestURL = regex3.exec(url);
+
+       if (pid && canvas) {
+         manURL = manifestURL[2].replace(/%22/gi,'');
+         canID = canvas[2].replace(/%22/gi,'');
+       }
+       else {
+         manURL = window.location.protocol + "//search.lib.virginia.edu/catalog/uva-lib:1017293/iiif/manifest.json";
+         canID = "https://iiif.lib.virginia.edu/iiif/dl/uva-lib:1017293/canvas/c0";
+       }
        Mirador({
          "id": "viewer",
          "layout": "1x1",
          "data": [
-           	{ "manifestUri": manURL, "location": "University of Virginia"},
-                { "manifestUri": window.location.protocol + "//search.lib.virginia.edu/catalog/uva-lib:1017293/iiif/manifest.json", "location": "University of Virginia Digital Library"},
-                { "manifestUri": window.location.protocol + "//search.lib.virginia.edu/catalog/uva-lib:2594787/iiif/manifest.json", "location": "University of Virginia Digital Library"},
-                { "manifestUri": window.location.protocol + "//search.lib.virginia.edu/catalog/uva-lib:1004371/iiif/manifest.json", "location": "University of Virginia Digital Library"},
-                { "manifestUri": window.location.protocol + "//search.lib.virginia.edu/catalog/uva-lib:743042/iiif/manifest.json", "location": "University of Virginia Digital Library"},
-                { "manifestUri": window.location.protocol + "//search.lib.virginia.edu/catalog/uva-lib:2287415/iiif/manifest.json", "location": "University of Virginia Digital Library"},
-                { "manifestUri": window.location.protocol + "//search.lib.virginia.edu/catalog/uva-lib:1003954/iiif/manifest.json", "location": "University of Virginia Digital Library"},
-                { "manifestUri": window.location.protocol + "//search.lib.virginia.edu/catalog/uva-lib:2201048/iiif/manifest.json", "location": "University of Virginia Digital Library"},
-                { "manifestUri": window.location.protocol + "//search.lib.virginia.edu/catalog/uva-lib:2429996/iiif/manifest.json", "location": "University of Virginia Digital Library"},
-                { "manifestUri": window.location.protocol + "//search.lib.virginia.edu/catalog/uva-lib:2466826/iiif/manifest.json", "location": "University of Virginia Digital Library"},
-                { "manifestUri": window.location.protocol + "//search.lib.virginia.edu/catalog/uva-lib:2429993/iiif/manifest.json", "location": "University of Virginia Digital Library"},
+           {"manifestUri": manURL , "location": "University of Virginia Digital Library"},
+           {"manifestUri": window.location.protocol + "//search.lib.virginia.edu/catalog/uva-lib:1017293/iiif/manifest.json", "location": "University of Virginia Digital Library"},
+           {"manifestUri": window.location.protocol + "//search.lib.virginia.edu/catalog/uva-lib:2594787/iiif/manifest.json", "location": "University of Virginia Digital Library"},
+           {"manifestUri": window.location.protocol + "//search.lib.virginia.edu/catalog/uva-lib:1004371/iiif/manifest.json", "location": "University of Virginia Digital Library"},
+           {"manifestUri": window.location.protocol + "//search.lib.virginia.edu/catalog/uva-lib:743042/iiif/manifest.json", "location": "University of Virginia Digital Library"},
+           {"manifestUri": window.location.protocol + "//search.lib.virginia.edu/catalog/uva-lib:2287415/iiif/manifest.json", "location": "University of Virginia Digital Library"},
+           {"manifestUri": window.location.protocol + "//search.lib.virginia.edu/catalog/uva-lib:1003954/iiif/manifest.json", "location": "University of Virginia Digital Library"},
+           {"manifestUri": window.location.protocol + "//search.lib.virginia.edu/catalog/uva-lib:2201048/iiif/manifest.json", "location": "University of Virginia Digital Library"},
+           {"manifestUri": window.location.protocol + "//search.lib.virginia.edu/catalog/uva-lib:2429996/iiif/manifest.json", "location": "University of Virginia Digital Library"},
+           {"manifestUri": window.location.protocol + "//search.lib.virginia.edu/catalog/uva-lib:2466826/iiif/manifest.json", "location": "University of Virginia Digital Library"},
+           {"manifestUri": window.location.protocol + "//search.lib.virginia.edu/catalog/uva-lib:2429993/iiif/manifest.json", "location": "University of Virginia Digital Library"},
          ],
          "windowObjects": [
-	    {
-                "loadedManifest": manURL,
-                "viewType" : "ImageView",
-            }
-	],
-         "annotationEndpoint": { "name":"Local Storage", "module": "LocalStorageEndpoint" }
+           {
+             "loadedManifest": manURL,
+             "canvasID" : canID,
+             "viewType": "ImageView",
+           }
+         ],
+         "annotationEndpoint": {"name": "Local Storage", "module": "LocalStorageEndpoint"}
        });
-     });
+     })
+
     </script>
   </body>
 </html>
