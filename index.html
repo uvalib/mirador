@@ -31,7 +31,7 @@
                manifestURL = regex3.exec(url);
 
        if (pid && canvas) {
-         manURL = manifestURL[2].replace(/%22/gi,'');
+         manURL = manifestURL[2].replace(/%22/gi,'').replace(/http:/gi,'https:');
          canID = canvas[2].replace(/%22/gi,'');
        }
        else {
